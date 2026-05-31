@@ -8,22 +8,23 @@ public class BasicMovement : MonoBehaviour
 
     private Rigidbody rb;
     private Vector2 movementInput;
-    private PlayerInput playerInput; // Añadimos esto
+    private PlayerInput playerInput;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
 
-        // Buscamos el componente Player Input en el mismo objeto
+        // Componente Player Input en el mismo objeto
         playerInput = GetComponent<PlayerInput>();
         
-        // Súper Hack: Cambiamos el comportamiento por código a "Broadcast Messages"
-        // Así no tenemos que arrastrar nada a la pestaña Events
         playerInput.notificationBehavior = PlayerNotifications.BroadcastMessages;
+
+
+        // 60 FPS estables en Android
+        Application.targetFrameRate = 60;
     }
 
-    // Al usar Broadcast Messages, Unity busca automáticamente un método llamado "OnMove"
     void OnMove(InputValue value)
     {
         movementInput = value.Get<Vector2>();
