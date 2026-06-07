@@ -7,9 +7,12 @@ public class Interactable : MonoBehaviour
     public bool canBePickedUp = true;
     public Sprite icon; // Para inventario
 
-    public void Interact(PlayerInteraction player)
+    // Cambiamos PlayerInteraction por tu script unificado: PlayerMovements
+    public void Interact(PlayerMovements player)
     {
-        // Aquí puedes decidir qué hacer según el tipo
         Debug.Log($"Interactuando con: {itemName}");
+        
+        // Aquí puedes agregar lógica en el futuro si el objeto 
+        // hace algo especial con el jugador al ser tocado.
     }
 }

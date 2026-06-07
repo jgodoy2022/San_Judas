@@ -73,7 +73,7 @@ public class DoorController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.GetComponentInParent<BasicMovement>() != null)
+        if (other.GetComponentInParent<PlayerMovements>() != null)
         {
             isPlayerNearby = true;
         }
@@ -81,7 +81,7 @@ public class DoorController : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.GetComponentInParent<BasicMovement>() != null)
+        if (other.GetComponentInParent<PlayerMovements>() != null)
         {
             isPlayerNearby = false;
         }
