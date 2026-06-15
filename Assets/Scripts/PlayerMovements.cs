@@ -10,6 +10,9 @@ public class PlayerMovements : MonoBehaviour
     [Header("Configuración Final del Juego")]
     public string escenaCreditos = "04_Credits"; 
 
+    [Header("Referencias de UI (se asigna sola al iniciar)")]
+    public InventarioUI inventarioUI;
+
     // --- VARIABLES DE INVENTARIO INTERNO ---
     [HideInInspector] public bool tieneObjetoKey = false; 
 
@@ -36,6 +39,13 @@ public class PlayerMovements : MonoBehaviour
 
         animator = GetComponentInChildren<Animator>();
         Application.targetFrameRate = 60;
+
+        // Jugador busca el componente InventarioUI en la escena por sí mismo
+        inventarioUI = Object.FindFirstObjectByType<InventarioUI>();
+        if(inventarioUI == null)
+        {
+            Debug.LogError("No se encontró ningún script 'InventarioUI en la escena. Asegurate de tenerlo pegado en tu CANVAS.");
+        }
     }
 
     void OnMove(InputValue value)
@@ -78,6 +88,16 @@ public class PlayerMovements : MonoBehaviour
         {
             if (currentInteractable.canBePickedUp)
             {
+                // 1. intentar añadirlo primero visualmente al inventario
+                if(inventarioUI != null && currentInteractable.icon != null)
+                {
+                    bool seGuardo = inventarioUI.AgregarItemAlInventario(currentInteractable.icon);
+
+                    // si inventario lleno, se frena la recolección
+                    if(!seGuardo) return;
+                }
+
+                // 2. lógica 
                 string nombreObjeto = currentInteractable.itemName.ToLower();
 
                 // Comprobamos si es la llave

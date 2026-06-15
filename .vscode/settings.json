@@ -67,6 +67,6 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "San Judas.slnx",
+    "dotnet.defaultSolution": "San_Judas.slnx",
     "dotnet.enableWorkspaceBasedDevelopment": false
 }
