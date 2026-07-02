@@ -11,10 +11,7 @@ public class PlayerMovements : MonoBehaviour
     public string escenaCreditos = "04_Credits"; 
 
     [Header("Referencias de UI (se asigna sola al iniciar)")]
-    public InventarioUI inventarioUI;
-
-    // --- VARIABLES DE INVENTARIO INTERNO ---
-    [HideInInspector] public bool tieneObjetoKey = false; 
+    public InventoryController inventarioController;
 
     private Rigidbody rb;
     private Vector2 movementInput;
@@ -29,7 +26,9 @@ public class PlayerMovements : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        rb.constraints = RigidbodyConstraints.FreezeRotationX | 
+                     RigidbodyConstraints.FreezeRotationY | 
+                     RigidbodyConstraints.FreezeRotationZ;
 
         playerInput = GetComponent<PlayerInput>();
         if (playerInput != null)
@@ -40,11 +39,10 @@ public class PlayerMovements : MonoBehaviour
         animator = GetComponentInChildren<Animator>();
         Application.targetFrameRate = 60;
 
-        // Jugador busca el componente InventarioUI en la escena por sí mismo
-        inventarioUI = Object.FindFirstObjectByType<InventarioUI>();
-        if(inventarioUI == null)
+        inventarioController = Object.FindFirstObjectByType<InventoryController>();
+        if(inventarioController == null)
         {
-            Debug.LogError("No se encontró ningún script 'InventarioUI en la escena. Asegurate de tenerlo pegado en tu CANVAS.");
+            Debug.LogError("No se encontró ningún script 'InventoryController' en la escena.");
         }
     }
 
@@ -54,24 +52,31 @@ public class PlayerMovements : MonoBehaviour
     }
 
     // --- BOTÓN ÚNICO DE INTERACTUAR ---
-    // Este método maneja TODO: recoger llaves, abrir la puerta final o abrir puertas normales
     public void OnInteract()
     {
-        // Prioridad 1: Si hay un objeto interactuable (como la llave) en nuestro sensor, lo recogemos de inmediato
+        // Prioridad 1: Recoger objetos interactuables en el sensor
         if (currentInteractable != null)
         {
-            OnPickUp(); // Esto ejecuta la recolección, guarda la llave y destruye la esfera
-            return; // Cortamos el código aquí para que no intente hacer nada más en este clic
+            OnPickUp(); 
+            return; 
         }
 
-        // Prioridad 2: Si no hay objetos pero estamos en el área de la PUERTA FINAL
+        // Prioridad 2: Área de la PUERTA FINAL
         if (estaEnPuertaFinal)
         {
-            IntentarAbrirPuertaFinal();
+            // Intentamos buscar si el jugador tiene la llave guardada en la barra visual
+            if (ConsumirLlaveDesdeBotonFisico())
+            {
+                AbrirPuertaFinalConExito();
+            }
+            else
+            {
+                Debug.Log("La puerta final está cerrada con candado. No tienes la llave en tu inventario.");
+            }
             return;
         }
 
-        // Prioridad 3: Si no hay nada de lo anterior pero estamos en una PUERTA NORMAL
+        // Prioridad 3: PUERTA NORMAL
         if (currentDoor != null)
         {
             currentDoor.InteractWithDoor();
@@ -80,36 +85,51 @@ public class PlayerMovements : MonoBehaviour
         }
     }
 
-    // --- BOTÓN DE RECOGER OBJETOS EN LA UI (Ahora por SENSOR) ---
+    // Intenta buscar en el contenedor 'Content' si existe la celda de la llave
+    private bool ConsumirLlaveDesdeBotonFisico()
+    {
+        if (inventarioController != null && inventarioController.panelContenedor != null)
+        {
+            // Recorremos los clones hijos dentro del Content
+            foreach (Transform hijo in inventarioController.panelContenedor)
+            {
+                if (hijo.name.ToLower().Contains("llave"))
+                {
+                    // Encontró la llave: la borramos del inventario y confirmamos el consumo
+                    inventarioController.EliminarCeldaPorNombre(hijo.gameObject);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void AbrirPuertaFinalConExito()
+    {
+        Debug.Log("¡Puerta final abierta con éxito! Cargando créditos...");
+        SceneManager.LoadScene(escenaCreditos);
+    }
+
+    // Función pública para que el InventoryController sepa si estamos tocando el trigger de la puerta
+    public bool EstaEnPuertaFinal()
+    {
+        return estaEnPuertaFinal;
+    }
+
+    // --- RECOGER OBJETOS ---
     public void OnPickUp()
     {
-        // Si estamos pisando el sensor de un objeto interactuable
         if (currentInteractable != null)
         {
             if (currentInteractable.canBePickedUp)
             {
-                // 1. intentar añadirlo primero visualmente al inventario
-                if(inventarioUI != null && currentInteractable.icon != null)
+                if(inventarioController != null && currentInteractable.icon != null)
                 {
-                    bool seGuardo = inventarioUI.AgregarItemAlInventario(currentInteractable.icon);
-
-                    // si inventario lleno, se frena la recolección
-                    if(!seGuardo) return;
+                    inventarioController.AgregarItemAlInventario(currentInteractable.itemName, currentInteractable.icon);
                 }
 
-                // 2. lógica 
-                string nombreObjeto = currentInteractable.itemName.ToLower();
-
-                // Comprobamos si es la llave
-                if (nombreObjeto.Contains("llave") || nombreObjeto.Contains("key") || nombreObjeto.Contains("judas"))
-                {
-                    tieneObjetoKey = true;
-                    Debug.Log("¡Llave guardada en el inventario a través del sensor!");
-                }
-
-                Debug.Log($"Recogiste: {currentInteractable.itemName}");
+                Debug.Log($"Recogiste: {currentInteractable.itemName} y se envió a la barra.");
                 
-                // Guardamos una referencia temporal para destruirlo y limpiamos el sensor antes
                 GameObject objetoAEliminar = currentInteractable.gameObject;
                 currentInteractable = null; 
                 
@@ -122,7 +142,7 @@ public class PlayerMovements : MonoBehaviour
         }
     }
 
-    // --- BOTÓN DE OBSERVAR / EXAMINAR EN LA UI (Ahora por SENSOR) ---
+    // --- BOTÓN DE OBSERVAR / EXAMINAR ---
     public void OnObserve()
     {
         if (currentInteractable != null)
@@ -135,23 +155,9 @@ public class PlayerMovements : MonoBehaviour
         }
     }
 
-    private void IntentarAbrirPuertaFinal()
-    {
-        if (tieneObjetoKey)
-        {
-            Debug.Log("¡Puerta final abierta con éxito! Cargando créditos...");
-            SceneManager.LoadScene(escenaCreditos);
-        }
-        else
-        {
-            Debug.Log("La puerta final está cerrada con candado. Necesitas encontrar el objeto clave.");
-        }
-    }
-
-    // --- DETECCIÓN DE PROXIMIDAD POR TRIGGERS (Puertas y Objetos) ---
+    // --- DETECCIÓN DE PROXIMIDAD POR TRIGGERS ---
     private void OnTriggerEnter(Collider other)
     {
-        // 1. Detectar Puerta Final
         if (other.CompareTag("PuertaFinal"))
         {
             estaEnPuertaFinal = true;
@@ -159,7 +165,6 @@ public class PlayerMovements : MonoBehaviour
             return;
         }
 
-        // 2. Detectar Puerta Normal
         DoorController door = other.GetComponent<DoorController>();
         if (door != null)
         {
@@ -167,7 +172,6 @@ public class PlayerMovements : MonoBehaviour
             return;
         }
 
-        // 3. Detectar Objeto Interactuable (Llaves, Notas, etc.)
         Interactable interactable = other.GetComponent<Interactable>();
         if (interactable != null)
         {
@@ -178,14 +182,12 @@ public class PlayerMovements : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        // 1. Salir de Puerta Final
         if (other.CompareTag("PuertaFinal"))
         {
             estaEnPuertaFinal = false;
             return;
         }
 
-        // 2. Salir de Puerta Normal
         DoorController door = other.GetComponent<DoorController>();
         if (door != null && currentDoor == door)
         {
@@ -193,7 +195,6 @@ public class PlayerMovements : MonoBehaviour
             return;
         }
 
-        // 3. Salir de Objeto Interactuable
         Interactable interactable = other.GetComponent<Interactable>();
         if (interactable != null && currentInteractable == interactable)
         {
@@ -210,27 +211,21 @@ public class PlayerMovements : MonoBehaviour
 
         if (animator != null)
         {
+            // Verificamos si hay movimiento significativo
             if (finalInput.magnitude > 0.1f)
             {
                 animator.SetBool("IsWalking", true);
-                int direction = GetDirection(finalInput);
-                animator.SetInteger("Direction", direction);
+                
+                // ENVIAMOS LOS DATOS AL BLEND TREE
+                animator.SetFloat("MoveX", finalInput.x);
+                animator.SetFloat("MoveY", finalInput.y);
             }
             else
             {
                 animator.SetBool("IsWalking", false);
-                rb.linearVelocity = Vector3.zero; 
+                // Si quieres que el personaje mantenga su última dirección al pararse,
+                // NO actualices MoveX/MoveY aquí.
             }
         }
-    }
-
-    private int GetDirection(Vector2 input)
-    {
-        if (animator == null) return 0;
-        if (input.x > 0.1f && input.y < -0.1f) return 0; // SE
-        if (input.x < -0.1f && input.y < -0.1f) return 1; // SW
-        if (input.x < -0.1f && input.y > 0.1f) return 2; // NW
-        if (input.x > 0.1f && input.y > 0.1f) return 3; // NE
-        return animator.GetInteger("Direction");
     }
 }
