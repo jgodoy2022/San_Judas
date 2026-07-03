@@ -26,6 +26,7 @@ public class PlayerMovements : MonoBehaviour
     private Interactable currentInteractable;
     private bool estaEnPuertaFinal = false;
     private PlayerHealth healthManager;
+    private DoorController currentSalonDoor;
 
     void Start()
     {
@@ -40,7 +41,7 @@ public class PlayerMovements : MonoBehaviour
         animator = GetComponentInChildren<Animator>();
         Application.targetFrameRate = 60;
 
-        inventarioController = Object.FindFirstObjectByType<InventoryController>();
+        inventarioController = Object.FindAnyObjectByType<InventoryController>();
 
         healthManager = GetComponent<PlayerHealth>();
     }
@@ -115,6 +116,19 @@ public class PlayerMovements : MonoBehaviour
         return estaEnPuertaFinal;
     }
 
+    public bool EstaCercaDePuertaSalon()
+    {
+        return currentSalonDoor != null;
+    }
+
+    public void AbrirPuertaSalonConExito()
+    {
+        if (currentSalonDoor != null)
+        {
+            currentSalonDoor.DesbloquearPuerta();
+        }
+    }
+
     // --- RECOGER OBJETOS ---
     public void OnPickUp()
     {
@@ -180,6 +194,12 @@ public class PlayerMovements : MonoBehaviour
             return;
         }
 
+        if (other.CompareTag("PuertaSalon"))
+        {
+            currentSalonDoor = other.GetComponent<DoorController>();
+            Debug.Log("Estás frente a la puerta del Salón.");
+        }
+
         DoorController door = other.GetComponent<DoorController>();
         if (door != null)
         {
@@ -201,6 +221,11 @@ public class PlayerMovements : MonoBehaviour
         {
             estaEnPuertaFinal = false;
             return;
+        }
+
+        if (other.CompareTag("PuertaSalon"))
+        {
+            currentSalonDoor = null;
         }
 
         DoorController door = other.GetComponent<DoorController>();
@@ -247,4 +272,4 @@ public class PlayerMovements : MonoBehaviour
             }
         }
     }
-}
+}   

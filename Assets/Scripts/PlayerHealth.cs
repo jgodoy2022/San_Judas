@@ -1,10 +1,15 @@
 using UnityEngine;
-using UnityEngine.SceneManagement; // Necesario para cargar escenas
+using UnityEngine.SceneManagement; 
 
 public class PlayerHealth : MonoBehaviour
 {
+    [Header("Configuración de Vida")]
     public float maxHearts = 4f;
     public float currentHearts;
+
+    [Header("Audio")]
+    public AudioSource audioSource; // Arrastra el AudioSource del Player aquí
+    public AudioClip dañoClip;      // Arrastra tu audio de daño aquí
 
     void Start()
     {
@@ -15,6 +20,12 @@ public class PlayerHealth : MonoBehaviour
     {
         currentHearts -= damage;
         Debug.Log("¡Ay! Vida actual: " + currentHearts);
+
+        // --- REPRODUCIR SONIDO AL RECIBIR DAÑO ---
+        if (audioSource != null && dañoClip != null)
+        {
+            audioSource.PlayOneShot(dañoClip);
+        }
         
         if (currentHearts <= 0)
         {
@@ -25,8 +36,6 @@ public class PlayerHealth : MonoBehaviour
     private void GameOver()
     {
         Debug.Log("Game Over - Cargando escena...");
-        
-        // Carga la escena específica que definiste
         SceneManager.LoadScene("03_GameOver");
     }
 }

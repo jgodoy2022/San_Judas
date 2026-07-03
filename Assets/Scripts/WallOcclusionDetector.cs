@@ -28,7 +28,7 @@ public class WallOcclusionDetector : MonoBehaviour
         if (objetivoJugador == null)
         {
             // Intentamos buscar al jugador automáticamente por código si no se asignó en el Inspector
-            PlayerMovements jugador = FindObjectOfType<PlayerMovements>();
+            PlayerMovements jugador = FindAnyObjectByType<PlayerMovements>();
             if (jugador != null) objetivoJugador = jugador.transform;
         }
     }

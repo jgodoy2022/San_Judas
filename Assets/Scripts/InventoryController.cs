@@ -55,7 +55,7 @@ public class InventoryController : MonoBehaviour
         // LÓGICA PARA LA LLAVE
         if (nombreItem.ToLower().Contains("llave"))
         {
-            PlayerMovements jugador = FindObjectOfType<PlayerMovements>();
+            PlayerMovements jugador = FindAnyObjectByType<PlayerMovements>();
             if (jugador != null)
             {
                 // Solo si está pisando el trigger de la puerta final, se consume y abre
@@ -74,9 +74,29 @@ public class InventoryController : MonoBehaviour
                 }
             }
         }
+        
+        else if (nombreItem.Trim() == "Salon") 
+        {
+            PlayerMovements jugador = FindAnyObjectByType<PlayerMovements>();
+
+            if (jugador != null && jugador.EstaCercaDePuertaSalon())
+            {
+                jugador.AbrirPuertaSalonConExito();
+                Debug.Log("¡Puerta del salón desbloqueada al estar cerca!");
+                
+                celdasActuales.Remove(celdaAsociada);
+                Destroy(celdaAsociada);
+            }
+            else
+            {
+                Debug.Log("No puedes usar la llave aquí. Debes estar frente a la puerta del salón.");
+            }
+        }
+
+
         else if (nombreItem.ToLower().Contains("vida") || nombreItem.ToLower().Contains("pocion"))
         {
-            PlayerMovements jugador = FindObjectOfType<PlayerMovements>();
+            PlayerMovements jugador = FindAnyObjectByType<PlayerMovements>();
             if (jugador != null)
             {
                 jugador.CurarJugador(); // Ya no necesita pasarle "20", lo pusimos a maxHearts

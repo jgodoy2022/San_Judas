@@ -6,33 +6,32 @@ public class DoorController : MonoBehaviour
     public enum DoorSide { Right, Left }
 
     [Header("Referencias")]
-    public Transform doorMesh;      // Aquí se arrastra la hoja 'Door'
+    public Transform doorMesh;
+    
+    [Header("Audio")]
+    public AudioSource audioSource;
+    public AudioClip audioChirrido; 
 
     [Header("Configuración de Animación")]
-    public DoorSide doorSide = DoorSide.Right; // Elegimos el lado en el Inspector
-    public float openAngle = 90f;   // Ángulo de apertura deseado
+    public DoorSide doorSide = DoorSide.Right;
+    public float openAngle = 90f;
     public float speed = 3f;        
 
     private bool isOpen = false;
     private bool isPlayerNearby = false; 
+    public bool estaBloqueada = false;
     
     private Quaternion defaultRotation;
     private Quaternion targetRotation;
 
     void Start()
     {
-        // Forzamos 60 FPS por si acaso
         Application.targetFrameRate = 60;
 
         if (doorMesh != null)
         {
-            // Guarda la rotación inicial tal cual está en la escena
             defaultRotation = doorMesh.localRotation;
-            
-            // Si es la puerta izquierda, invertimos el ángulo multiplicando por -1
             float finalAngle = (doorSide == DoorSide.Left) ? -openAngle : openAngle;
-            
-            // Calcula el destino exacto en base a su dirección
             targetRotation = defaultRotation * Quaternion.Euler(0, finalAngle, 0);
         }
     }
@@ -41,17 +40,13 @@ public class DoorController : MonoBehaviour
     {
         if (doorMesh == null) return;
 
-        // --- SOLUCIÓN INPUT MÓVIL ---
-        // Al usar el New Input System, esta línea detecta TANTO la tecla 'E' en PC 
-        // como cualquier botón virtual táctil que configuremos en Android.
         bool interactionPressed = (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame);
 
         if (isPlayerNearby && interactionPressed)
         {
-            isOpen = !isOpen; 
+            InteractWithDoor();
         }
 
-        // Aplica la rotación suavizada
         if (isOpen)
         {
             doorMesh.localRotation = Quaternion.Slerp(doorMesh.localRotation, targetRotation, Time.deltaTime * speed);
@@ -62,13 +57,27 @@ public class DoorController : MonoBehaviour
         }
     }
 
-    // Método público para que el botón de la UI de Android pueda abrir la puerta al tocarlo
     public void InteractWithDoor()
     {
-        if (isPlayerNearby)
+        if (estaBloqueada)
         {
-            isOpen = !isOpen;
+            Debug.Log("La puerta está cerrada con llave.");
+            return;
         }
+    
+        isOpen = !isOpen;
+
+        // Reproducimos el audio cada vez que se cambia el estado de isOpen
+        if (audioSource != null && audioChirrido != null)
+        {
+            audioSource.PlayOneShot(audioChirrido);
+        }
+    }
+
+    public void DesbloquearPuerta()
+    {
+        estaBloqueada = false;
+        Debug.Log("¡Has desbloqueado la puerta!");
     }
 
     private void OnTriggerEnter(Collider other)

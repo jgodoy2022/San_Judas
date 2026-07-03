@@ -15,7 +15,7 @@ public class Interactable : MonoBehaviour
         if (canBePickedUp && collision.CompareTag("Player"))
         {
             // Buscamos el controlador de tu nuevo inventario deslizable
-            InventoryController inventario = FindObjectOfType<InventoryController>();
+            InventoryController inventario = FindAnyObjectByType<InventoryController>();
 
             if (inventario != null)
             {
