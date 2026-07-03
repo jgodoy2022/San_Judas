@@ -1,0 +1,1 @@
+Slight movement effect visible when using the sprite in some engine (not visible in the gif :c)

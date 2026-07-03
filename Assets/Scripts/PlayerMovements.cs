@@ -7,10 +7,14 @@ public class PlayerMovements : MonoBehaviour
     [Header("Configuración de Movimiento")]
     public float speed = 2f; 
 
+    [Header("Configuración de Visión")]
+    public Transform lightObject; // Arrastra aquí tu Spot Light 2D desde el Inspector
+    public float rotSpeed = 15f;  // Velocidad de giro del cono
+
     [Header("Configuración Final del Juego")]
     public string escenaCreditos = "04_Credits"; 
 
-    [Header("Referencias de UI (se asigna sola al iniciar)")]
+    [Header("Referencias de UI")]
     public InventoryController inventarioController;
 
     private Rigidbody rb;
@@ -18,32 +22,27 @@ public class PlayerMovements : MonoBehaviour
     private PlayerInput playerInput;
     private Animator animator;
 
-    // Sensores de proximidad actuales
     private DoorController currentDoor;
     private Interactable currentInteractable;
     private bool estaEnPuertaFinal = false;
+    private PlayerHealth healthManager;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
         rb.constraints = RigidbodyConstraints.FreezeRotationX | 
-                     RigidbodyConstraints.FreezeRotationY | 
-                     RigidbodyConstraints.FreezeRotationZ;
+                         RigidbodyConstraints.FreezeRotationY | 
+                         RigidbodyConstraints.FreezeRotationZ;
 
         playerInput = GetComponent<PlayerInput>();
-        if (playerInput != null)
-        {
-            playerInput.notificationBehavior = PlayerNotifications.BroadcastMessages;
-        }
+        if (playerInput != null) playerInput.notificationBehavior = PlayerNotifications.BroadcastMessages;
 
         animator = GetComponentInChildren<Animator>();
         Application.targetFrameRate = 60;
 
         inventarioController = Object.FindFirstObjectByType<InventoryController>();
-        if(inventarioController == null)
-        {
-            Debug.LogError("No se encontró ningún script 'InventoryController' en la escena.");
-        }
+
+        healthManager = GetComponent<PlayerHealth>();
     }
 
     void OnMove(InputValue value)
@@ -155,6 +154,22 @@ public class PlayerMovements : MonoBehaviour
         }
     }
 
+    public void CurarJugador()
+    {
+        if (healthManager != null)
+        {
+            // Restauramos al máximo
+            healthManager.currentHearts = healthManager.maxHearts;
+        
+            Debug.Log("¡Salud restaurada al máximo! Corazones actuales: " + healthManager.currentHearts);
+        
+            // --- AQUÍ ESTÁ EL TRUCO PARA LA UI ---
+            // Si tu script UIHealthManager tiene una función de refresco, llámala aquí.
+            // Si no, al cambiar el valor de currentHearts, si tu UIHealthManager 
+            // está en el Update(), se debería actualizar solo.
+        }
+    }
+
     // --- DETECCIÓN DE PROXIMIDAD POR TRIGGERS ---
     private void OnTriggerEnter(Collider other)
     {
@@ -204,27 +219,31 @@ public class PlayerMovements : MonoBehaviour
 
     void FixedUpdate()
     {
-        Vector2 finalInput = movementInput;
-        Vector3 moveDirection = new Vector3(finalInput.x, 0f, finalInput.y).normalized;
-        
+        // 1. Movimiento del jugador
+        Vector3 moveDirection = new Vector3(movementInput.x, 0f, movementInput.y).normalized;
         rb.linearVelocity = moveDirection * speed;
 
+        // 2. Rotación de la Linterna
+        if (movementInput.magnitude > 0.1f && lightObject != null)
+        {
+            float targetAngle = Mathf.Atan2(movementInput.y, movementInput.x) * Mathf.Rad2Deg;
+            // El -90 ajusta el cono para que mire hacia adelante según la dirección
+            Quaternion targetRotation = Quaternion.Euler(90f, 0, targetAngle - 90f);
+            lightObject.rotation = Quaternion.Slerp(lightObject.rotation, targetRotation, Time.fixedDeltaTime * rotSpeed);
+        }
+
+        // 3. Animación
         if (animator != null)
         {
-            // Verificamos si hay movimiento significativo
-            if (finalInput.magnitude > 0.1f)
+            if (movementInput.magnitude > 0.1f)
             {
                 animator.SetBool("IsWalking", true);
-                
-                // ENVIAMOS LOS DATOS AL BLEND TREE
-                animator.SetFloat("MoveX", finalInput.x);
-                animator.SetFloat("MoveY", finalInput.y);
+                animator.SetFloat("MoveX", movementInput.x);
+                animator.SetFloat("MoveY", movementInput.y);
             }
             else
             {
                 animator.SetBool("IsWalking", false);
-                // Si quieres que el personaje mantenga su última dirección al pararse,
-                // NO actualices MoveX/MoveY aquí.
             }
         }
     }

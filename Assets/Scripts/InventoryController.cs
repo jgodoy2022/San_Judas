@@ -76,10 +76,14 @@ public class InventoryController : MonoBehaviour
         }
         else if (nombreItem.ToLower().Contains("vida") || nombreItem.ToLower().Contains("pocion"))
         {
-            Debug.Log("¡Curando al jugador!");
-            // Aquí puedes meter la lógica de curación en el futuro
-            celdasActuales.Remove(celdaAsociada);
-            Destroy(celdaAsociada);
+            PlayerMovements jugador = FindObjectOfType<PlayerMovements>();
+            if (jugador != null)
+            {
+                jugador.CurarJugador(); // Ya no necesita pasarle "20", lo pusimos a maxHearts
+
+                celdasActuales.Remove(celdaAsociada);
+                Destroy(celdaAsociada);
+            }
         }
     }
 
