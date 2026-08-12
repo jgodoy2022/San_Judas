@@ -20,6 +20,8 @@ public class DoorController : MonoBehaviour
     private bool isOpen = false;
     private bool isPlayerNearby = false; 
     public bool estaBloqueada = false;
+    public bool esLaPrimeraPuerta = false;
+    
     
     private Quaternion defaultRotation;
     private Quaternion targetRotation;
@@ -61,8 +63,17 @@ public class DoorController : MonoBehaviour
     {
         if (estaBloqueada)
         {
-            Debug.Log("La puerta está cerrada con llave.");
+            DialogManager.instance.ShowMessage("Esta puerta está cerrada con llave.");
             return;
+        }
+
+        if (esLaPrimeraPuerta) 
+        {
+            // Llamamos a un método que no tiene parámetros
+            Invoke("MostrarDialogoPuerta", 3.0f);
+            Invoke("MostrarDialogoDuda1", 10.0f);
+            Invoke("MostrarDialogoDuda2", 12.0f);
+            Invoke("MostrarDialogoObjetivo", 15.0f);
         }
     
         isOpen = !isOpen;
@@ -72,6 +83,26 @@ public class DoorController : MonoBehaviour
         {
             audioSource.PlayOneShot(audioChirrido);
         }
+    }
+
+    void MostrarDialogoPuerta()
+    {
+        DialogManager.instance.ShowMessage("¿Dónde están todos?");
+    }
+
+    void MostrarDialogoDuda1()
+    {
+        DialogManager.instance.ShowMessage("Esto...");
+    }
+
+    void MostrarDialogoDuda2()
+    {
+        DialogManager.instance.ShowMessage("No recuerdo qué sucedió...");
+    }
+
+    void MostrarDialogoObjetivo()
+    {
+        DialogManager.instance.ShowMessage("!Tengo que salir de aquí!!!");
     }
 
     public void DesbloquearPuerta()

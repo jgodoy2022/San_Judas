@@ -19,7 +19,7 @@ public class FootstepManager : MonoBehaviour
     {
         // Detectamos si el personaje se está moviendo a través de su velocidad
         // Esto funciona independientemente de si usas el nuevo o viejo Input System
-        bool isMoving = rb.velocity.magnitude > 0.1f;
+        bool isMoving = rb.linearVelocity.magnitude > 0.1f;
 
         if (isMoving)
         {

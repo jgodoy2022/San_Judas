@@ -21,10 +21,10 @@ public class Interactable : MonoBehaviour
             {
                 // Le mandamos el nombre y su icono al inventario de abajo
                 inventario.AgregarItemAlInventario(itemName, icon);
-
-                Debug.Log($"¡{itemName} recogido con éxito!");
-                
-                // Destruimos la llave física del suelo del mapa
+    
+                // AGREGAMOS EL DIÁLOGO AQUÍ
+                DialogManager.instance.ShowMessage("Esto es interesante...");
+    
                 Destroy(gameObject);
             }
             else

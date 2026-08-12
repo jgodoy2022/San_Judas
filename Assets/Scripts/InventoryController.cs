@@ -45,7 +45,7 @@ public class InventoryController : MonoBehaviour
             botonCelda.onClick.AddListener(() => UsarItem(nombreItem, nuevaCelda));
         }
 
-        Debug.Log($"Añadido: {nombreItem} con su imagen. Celdas en pantalla: {celdasActuales.Count}");
+        DialogManager.instance.ShowMessage("Esto es interesante...");
     }
 
     private void UsarItem(string nombreItem, GameObject celdaAsociada)
@@ -61,7 +61,6 @@ public class InventoryController : MonoBehaviour
                 // Solo si está pisando el trigger de la puerta final, se consume y abre
                 if (jugador.EstaEnPuertaFinal())
                 {
-                    Debug.Log("¡Llave usada con éxito desde el inventario!");
                     jugador.AbrirPuertaFinalConExito();
                     
                     // Se elimina de la lista y se destruye de la barra
@@ -70,7 +69,7 @@ public class InventoryController : MonoBehaviour
                 }
                 else
                 {
-                    Debug.Log("No puedes usar la llave aquí. Debes estar frente a la puerta final.");
+                    DialogManager.instance.ShowMessage("No puedo usar esto aqui....");
                 }
             }
         }
@@ -82,14 +81,14 @@ public class InventoryController : MonoBehaviour
             if (jugador != null && jugador.EstaCercaDePuertaSalon())
             {
                 jugador.AbrirPuertaSalonConExito();
-                Debug.Log("¡Puerta del salón desbloqueada al estar cerca!");
+                DialogManager.instance.ShowMessage("La puerta se ha abierto.");
                 
                 celdasActuales.Remove(celdaAsociada);
                 Destroy(celdaAsociada);
             }
             else
             {
-                Debug.Log("No puedes usar la llave aquí. Debes estar frente a la puerta del salón.");
+                DialogManager.instance.ShowMessage("No puedo usar esto aqui....");
             }
         }
 
@@ -100,6 +99,7 @@ public class InventoryController : MonoBehaviour
             if (jugador != null)
             {
                 jugador.CurarJugador(); // Ya no necesita pasarle "20", lo pusimos a maxHearts
+                DialogManager.instance.ShowMessage("Me siento mucho mejor.");
 
                 celdasActuales.Remove(celdaAsociada);
                 Destroy(celdaAsociada);
